@@ -60,3 +60,7 @@ target/
 
 #Ipython Notebook
 .ipynb_checkpoints
+
+analytics.dat
+client_secrets.json
+config.py
