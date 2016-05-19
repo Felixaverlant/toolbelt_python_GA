@@ -18,3 +18,4 @@ Process the independence of products that were bought.
 
 # todo
 - Label on legend.
+- label on nodes.

@@ -61,3 +61,23 @@ def get_transactions(profile_id, start_date, end_date):
 		metrics='ga:itemQuantity',
 		dimensions='ga:transactionId,ga:productName'
 	).execute())
+
+def get_all_pages(profile_id, start_date, end_date):
+	""" Get all pages for a period of time """
+	return ga_to_df(service.data().ga().get(
+				ids='ga:' + profile_id,
+		start_date=start_date,
+		end_date=end_date,
+		metrics='ga:pageviews',
+		dimensions='ga:pagePath,ga:date'
+	).execute())
+
+def get_all_pageviews(profile_id, start_date, end_date):
+	""" Get all pages for a period of time """
+	return ga_to_df(service.data().ga().get(
+				ids='ga:' + profile_id,
+		start_date=start_date,
+		end_date=end_date,
+		metrics='ga:pageviews',
+		dimensions='ga:date'
+	).execute())
