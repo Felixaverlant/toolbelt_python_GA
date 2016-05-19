@@ -52,11 +52,12 @@ def raw_query(profile_id, start_date, end_date,metrics,dimensions):
 		dimensions=dimensions
 	).execute()
 
-def get_transactions(profile_id):
+def get_transactions(profile_id, start_date, end_date):
+	""" Get transactions based on ga:productName """
 	return ga_to_df(service.data().ga().get(
 		ids='ga:' + profile_id,
-		start_date='2016-01-01',
-		end_date='2016-05-20',
+		start_date=start_date,
+		end_date=end_date,
 		metrics='ga:itemQuantity',
 		dimensions='ga:transactionId,ga:productName'
 	).execute())
