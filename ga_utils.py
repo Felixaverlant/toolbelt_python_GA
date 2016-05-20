@@ -63,6 +63,26 @@ def get_transactions(profile_id, start_date, end_date):
 		dimensions='ga:transactionId,ga:productName'
 	).execute())
 
+def get_transactions_by_day(profile_id, start_date, end_date):
+	""" Get transactions based on ga:productName """
+	return ga_to_df(service.data().ga().get(
+		ids='ga:' + profile_id,
+		start_date=start_date,
+		end_date=end_date,
+		metrics='ga:transactions',
+		dimensions='ga:date'
+	).execute())
+
+def get_sessions(profile_id, start_date, end_date):
+	""" Get transactions based on ga:productName """
+	return ga_to_df(service.data().ga().get(
+		ids='ga:' + profile_id,
+		start_date=start_date,
+		end_date=end_date,
+		metrics='ga:sessions',
+		dimensions='ga:date'
+	).execute())
+
 def get_all_pages(profile_id, start_date, end_date):
 	""" Get all pages for a period of time """
 	return ga_to_df(service.data().ga().get(
@@ -166,4 +186,10 @@ def get_checkout_infos(profile_id,start_date, end_date, first_step_CO, device=''
 	df['device'] = device
 
 	return df
+
+colours = {
+	"red" : "#F48B94",
+	"blue" : "#ACDBC9",
+	"dark-blue": "#779ECB"
+}
 
