@@ -1,6 +1,7 @@
 import json
 import pandas as pd
 import auth
+import config as config
 
 service = auth.main()
 
@@ -65,7 +66,7 @@ def get_transactions(profile_id, start_date, end_date):
 def get_all_pages(profile_id, start_date, end_date):
 	""" Get all pages for a period of time """
 	return ga_to_df(service.data().ga().get(
-				ids='ga:' + profile_id,
+		ids='ga:' + profile_id,
 		start_date=start_date,
 		end_date=end_date,
 		metrics='ga:pageviews',
@@ -75,9 +76,94 @@ def get_all_pages(profile_id, start_date, end_date):
 def get_all_pageviews(profile_id, start_date, end_date):
 	""" Get all pages for a period of time """
 	return ga_to_df(service.data().ga().get(
-				ids='ga:' + profile_id,
+		ids='ga:' + profile_id,
 		start_date=start_date,
 		end_date=end_date,
 		metrics='ga:pageviews',
 		dimensions='ga:date'
 	).execute())
+
+def filter_devices(device=''):
+	if (device != ''):
+		return 'ga:deviceCategory==' + device
+
+def first_step(profile_id, start_date, end_date, device=''):
+	device = filter_devices(device)
+	return(
+		ga_to_df(service.data().ga().get(
+			ids='ga:' + profile_id,
+			start_date=start_date,
+			end_date=end_date,
+			metrics = "ga:sessions, ga:bounceRate",
+			filters = device
+		).execute())
+	)
+
+def start_CO(first_step_CO, profile_id,start_date, end_date, device=''):
+	device = filter_devices(device)
+
+	return (
+		ga_to_df(service.data().ga().get(
+			ids='ga:' + profile_id,
+		    start_date = start_date,
+		    end_date = end_date,
+		    metrics="ga:sessions",
+		    sort="-ga:sessions",
+		    segment= "sessions::condition::ga:pagePath=@"+first_step_CO,
+		    filters = device
+		).execute())
+	)
+
+def transactions(profile_id, start_date, end_date, device=''):
+	device = filter_devices(device)
+
+	return (
+		ga_to_df(service.data().ga().get(
+			ids='ga:' + profile_id,
+			start_date = start_date,
+			end_date = end_date,
+			metrics="ga:transactions",
+			filters= device
+		).execute())
+	)
+
+def get_checkout_infos(profile_id,start_date, end_date, first_step_CO, device=''):
+	f_step = first_step(config.profile_id,start_date, end_date)
+	s_co = start_CO(config.first_step_CO, config.profile_id,start_date, end_date)
+	transac = transactions(config.profile_id,start_date, end_date)
+	
+	total_sessions = f_step['ga:sessions']
+	BR = float(f_step['ga:bounceRate'])
+	
+	before_shopping_percent = 100 - BR
+	
+	before_shopping = float(total_sessions) * BR / 100
+
+	entry_CO_percent = int(float(s_co['ga:sessions']) / float(total_sessions) * 100)
+	
+	trans = transac['ga:transactions']
+	transactions_percent = int(float(trans) / float(total_sessions) * 100)
+
+	sco_f = float(s_co['ga:sessions'])
+	bshop_f = float(before_shopping)
+	transac_f = transac
+	br_f = BR
+	stays = pd.DataFrame(data={"status":["stays" for i in range(4)], "percent":[100, before_shopping_percent, entry_CO_percent, transactions_percent], "steps":["total", "Shopping", "Checkout", "Conversions"]})
+	
+	lost = pd.DataFrame(
+		data={
+			"status":["lost" for i in range(4)], 
+			"percent": [
+				0,
+				br_f, 
+				100-sco_f / bshop_f *100, 
+				100 - float(trans) / float(s_co['ga:sessions']) * 100
+			], 
+			"steps":["total", "Shopping", "Checkout", "Conversions"]
+		})
+
+	df = pd.concat([stays,lost])
+	df['device'] = device
+
+	return df
+
